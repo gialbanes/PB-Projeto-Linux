@@ -20,6 +20,8 @@ Desenvolver e testar habilidades em Linux, AWS e automação de processos atrav�
 
 ## 1. Configuração do Ambiente
 colocar aqui oq é uma VPC 
+
+### 1.1 Criar uma VPC na AWS
 Primeiramente, é necessário criar uma VPC para o seu ambiente. No console da AWS pesquise pelo serviço de `VPC` e criar uma nova VPC de acordo com suas necessidades como na imagem a seguir.
 ![alt text](image-9.png)
 
@@ -46,7 +48,7 @@ Ainda precisa anexar as subnets públicas à essa `Route Table`. Para isso, sele
 
 ![alt text](image-18.png)
 
-
+### 1.2 Criar uma instância EC2
 Para dar continuidade à configuração do ambiente, chegou a hora de criar a instância EC2. Mas antes é necessário criar as regras de `Security Group`. Para configurar o tráfego da EC2, há a necessidade de criar um Security group. Agora, no console da AWS pesquise pelo serviço de `EC2` e navegue até `Security Group`. Basta criá-lo de acordo com suas necessidades. No na parte de configuração de regras de entrada, criei duas, uma permitindo o tráfego HTTP para qualquer lugar, e outra SSH para o meu IP. Assim como na imagem. As regras de saída deixar o padrão.
 ![alt text](image-14.png)
 
@@ -56,6 +58,7 @@ Agora, para criar de fato a instância EC2, no console da AWS pesquise pelo serv
 Durante a criação da EC2, ainda é necessário passar pelas `Configurações de Rede`. Nessa parte, as configurações devem estar assim como na imagem abaixo, na VPC criada, assim como na subnet pública, com o IP automático habilitado e no security group. Além disso, vincule uma chave SSH à ela, se voê não tiver, é só criar, pois mais tarde usaremos para conectar à EC2.
 ![alt text](networksettings.png)
 
+### 1.3 Acessar a instância via SSH 
 Agora todo o seu ambiente estará configurado. Por fim, basta acessar a EC2 via SSH. Para isso, selecione a EC2 e clique em `connect` como na imagem abaixo.
 ![alt text](connect.png)
 
@@ -121,6 +124,40 @@ Depois, basta modificar como deseja e atualizar a página do navegador que as no
 
 ![alt text](image-3.png)
 
+Após a configuração da página, um dos requsitos do projeto é criar um serviço sustemd para garantir que o Nginx reinicie automaticamente se parar. Para isso você deve criar um arquivo `override.conf` para fazer as configurações necessárias. O recomendado pelo `systemd` é criar outro arquivo para nao modificar o original, para evitar que atualizações do Nginx sobrescrevam a configuração. Para criar o arquivo, execute:
+
+```bash
+sudo nano /etc/systemd/system/nginx.service.d/override.conf
+```
+
+Dentro dele, insira as linhas abaixo. Dessa forma, o sistema irá reiniciar sempre que ele parar em 5 segundos.
+```bash 
+[Service]
+Restart=always
+RestartSec=5
+```
+Para recarregar o deamon a fim de que ele reconheça as mudanças.
+```bash
+sudo systemctl daemon-reload
+```
+
+Para reiniciar o serviço do Nginx.
+```bash
+sudo systemctl restart nginx 
+```
+
+Para simular uma parada, mate o processo com:
+```bash
+sudo pkill -9 nginx
+```
+
+Verifique o status do serviço do Nginx novamente. Ele estará como `ativo` por 4 segundos atrás, observe na imagem abaixo.
+```bash
+ sudo systemctl status nginx
+ ```
+
+ ![alt text](image-20.png)
+
 ## 3. Monitoramento e notificações
 ### 3.1 Criar um script em Python para monitorar o site
 Os requisitos do script são:
@@ -165,6 +202,105 @@ Criar a função de enviar notificação ao Discord. Nela, um dicionário é cri
 ![alt text](image-8.png)
 
 
+![alt text](image-21.png)
 
+Por fim, é necessário fornecer pemissão de execução ao script, então execute:
+```bash
+sudo chmod +x /opt/monitoramento.py
+```
 
+### 3.3 Configurar o scrpit para rodar automaticamente a cada 1 minuto
+Para fazer essa configuração, utilize o crontab. Se você não tiver instalado, basta seguir o passo à passo a seguir:
+
+Para instalar 
+```bash 
+sudo yum install cronie
+```
+
+Para habilitar o serviço
+```bash
+sudo systemctl enable crond
+```
+
+Para inciar o serviço
+```bash
+sudo systemctl start crond
+```
+
+Verificar se o serviço está como `Active`
+```bash
+sudo systemctl status crond
+```
+
+![alt text](image-22.png)
+
+Após seguir o passo à passo, deve-se realizar a configuração. Para isso, execute:
+
+```bash
+crontab -e
+```
+
+Adicione a seguinte linha e depois pressione `ESC` e `:wq` para sair no VI.
+```bash
+* * * * * /usr/bin/python3 /opt/monitoramento.py >> /var/log/monitoramento.log 2>&1
+```
+
+Após editado, o script começará a ser executado automaticamente, entretanto, ainda é necessário conceder a permissão de escrita ao arquivo de log. Para isso, execute:
+
+```bash
+sudo chmod 666 /var/log/monitoramento.log
+```
+
+## 4. Automação e Testes
+### 4.1 Testar a implementação
+Primeiro, verifique se o site está acessível via navegador. Basta copiar o IP pública da sua EC2 e colar no navegador. No meu caso, devido as minhas configurações de HTML e CSS, a minha página irá aparecer assim:
+![alt text](image-3.png)
+
+Agora, iremos para o teste do servidor em si. Para rodar o scrip Python, execute:
+```bash
+python3 monitoramento.py
+```
+Para verificar se a página está respondendo à requisições HTTP, execute:
+```bash
+tail -f /var/log/monitoramento.log
+```
+Com isso, a cada minuto o script vai rodar automaticamente, se a página estiver respondendo à requisições HTTP, isso irá aparecer na tela a cada minuto. Para parar a verificação, é só pressionar `CTRL + C`.
+
+![alt text](image-24.png)
+
+Agora para simular um erro, pare o serviço do Nginx, rode o script e verifique se a página está respondendo.
+
+Para parar o serviço do Nginx:
+```bash 
+sudo systemctl stop nginx
+```
+Para rodar o script:
+```bash
+python3 monitoramento.py
+```
+Para verificar se a página está respondendo à requisições HTTP, execute:
+```bash
+tail -f /var/log/monitoramento.log
+```
+
+As mensagens de erro já irão começar a aparecer na sua tela assim:
+![alt text](image-25.png)
+
+Ao abrir o servidor do `Discord` as notificações de `Site INDISPONÍVEL` também já estarão registradas.
+![alt text](image-26.png)
+
+Se você quiser verificar os logs dentro do arquivo que foi criado, execute:
+
+Navegue até a basta onde se encontra o arquivo de log: 
+```bash 
+cd /var/log
+```
+
+Peça para exibir o conteúdo do arquivo com:
+```bash 
+cat monitoramento.log
+```
+
+Na imagem a seguir mostra todos os logs dos testes que eu realizei
+![alt text](image-27.png)
 
