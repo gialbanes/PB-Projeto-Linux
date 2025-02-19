@@ -16,14 +16,14 @@ def verificar_site():
         if status_code == 200:
             mensagem = "✅ Site OK"
         else:
-            mensagem = "Site INDISPONÍVEL"
-
-        registrar_log(f"{mensagem} - Código de Status: {status_code}")
+            mensagem = f"⚠️ Site retornou um status inesperado: {res.status_code}"
+            enviar_notificacao(mensagem)
+        registrar_log(mensagem)
 
     except requests.RequestException as e:
-        mensagem = "Site INDISPONÍVEL"
+        mensagem = f"❌ Site INDISPONÍVEL! Erro: {e}"
         enviar_notificacao(mensagem)
-        registrar_log(f"❌ Erro ao acessar o site: {str(e)}")
+        registrar_log(mensagem)
 
 def enviar_notificacao(mensagem):
     data = {"content": mensagem}

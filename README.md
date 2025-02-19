@@ -1,89 +1,182 @@
 # DevSecOps - Projeto Linux 
 
-## Documentação do primeiro projeto proposto na trilha de DevSecOps no meu programa de estágio PB - 2025 
+ **Documentação do primeiro projeto proposto na trilha de DevSecOps no meu programa de estágio PB - 2025**  
 
-## Objetivo 
-Desenvolver e testar habilidades em Linux, AWS e automação de processos através da configuração de um ambiente de servidor web monitorado.
+## 🎯 Objetivo  
+Desenvolver e testar habilidades em **Linux**, **AWS** e **automação de processos** através da configuração de um ambiente de servidor web monitorado.
 
-## Requisitos Técnicos 
-- Windows 11
-- Amazon Linux 2023
-- Instância EC2 AWS
-- Nginx
-
-## Índice
-1. [Configuração do Ambiente](#configuração-do-ambiente)
-2. [Configuração do Servidor](#configuração-do-servidor)
-3. [Monitoramento e Notificações](#monitoramento-e-notificações)
-4. [Automação e Testes](#automação-e-testes)
+## 🛠️ Requisitos Técnicos  
+- **Windows 11**  
+- **Amazon Linux 2023**  
+- **Instância EC2 AWS**  
+- **Nginx**  
 
 
-## 1. Configuração do Ambiente
-colocar aqui oq é uma VPC 
+### 🔹 Tecnologias Utilizadas  
+<p align="left">
+  <img src="https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black"/>
+  <img src="https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white"/>
+</p> 
 
-### 1.1 Criar uma VPC na AWS
-Primeiramente, é necessário criar uma VPC para o seu ambiente. No console da AWS pesquise pelo serviço de `VPC` e criar uma nova VPC de acordo com suas necessidades como na imagem a seguir.
-![alt text](image-9.png)
+## 📑 Índice  
+1. [Configuração do Ambiente](#configuração-do-ambiente)  
+2. [Configuração do Servidor](#configuração-do-servidor)  
+3. [Monitoramento e Notificações](#monitoramento-e-notificações)  
+4. [Automação e Testes](#automação-e-testes)  
 
-Continuando na configuração da VPC, ainda precisa criar as sub-redes. No seu ambiente, navegue até a sessão de subnets e crie duas públicas e duas privadas. Uma pública e uma privada na região `us-east-1a` e as outras duas na `us-east-1b`.
-![alt text](image-10.png)
 
-Após a criação das subnets, elas irão aparecer assim na sua console.
-![alt text](image-11.png)
+## 1. Configuração do Ambiente  
 
-Para contribuir para a comunicação com a internet, é necessário criar um INternet Gateway e anexá-lo à VPC. Ainda no console da AWS no serviço de VPC, navegue até `Internet Gateway` e crie de acordo com suas necessidades. 
-![alt text](image-12.png)
+### 📌 O que é uma VPC?  
+A **VPC (Virtual Private Cloud)** é uma rede virtual privada dentro da AWS, permitindo isolar e configurar seus recursos da maneira que desejar. Com ela, é possível dividir a rede em **sub-redes (subnets)**, definir tabelas de roteamento, configurar gateways de acesso e controlar a segurança através de grupos de segurança e listas de controle de acesso (ACLs).  
 
-Após a criação é necessário anexá-lo à VPC. Para isso, clique no botão de `actions` e selecione `attach to VPC`.
-![alt text](image-13.png)
+Criar uma VPC personalizada garante maior controle sobre a comunicação entre seus recursos e o acesso à internet, sendo um requisito essencial para a maioria dos projetos que envolvem infraestrutura na nuvem.  
 
-Para permitir que as subnets públicas se comuniquem com o ambiente externo, é necessário criar uma `Route table`. Basta ir até a sessão e criar.
-![alt text](image-15.png)
+---
 
-Entretanto, as regras não foram definidas. Logo, selecione a `Route table` criada e edite as regras. Crie uma com destination 0.0.0.0/0 e target para o `Internet Gateway` criado anteriormente.
-![alt text](image-16.png)
+### 1.1 Criar uma VPC na AWS  
+O primeiro passo para configurar seu ambiente na AWS é criar uma VPC personalizada. No console da AWS, pesquise pelo serviço **VPC** e crie uma nova, definindo um **bloco CIDR** adequado para sua rede (por exemplo, `10.0.0.0/16` permite criar até 65.536 endereços IP privados dentro dessa VPC).  
 
-Ainda precisa anexar as subnets públicas à essa `Route Table`. Para isso, selecione-a e navegue até `Subnet Associations`. Por fim, edite selecionando as duas subnets públicas criadas no início.
-![alt text](image-17.png)
+![alt text](imgs/image-9.png)  
 
-![alt text](image-18.png)
+Após criar a VPC, será necessário configurar as **subnets**, que são divisões menores dentro da VPC. As subnets permitem organizar os recursos e distribuir a carga de trabalho em diferentes zonas de disponibilidade.  
 
-### 1.2 Criar uma instância EC2
-Para dar continuidade à configuração do ambiente, chegou a hora de criar a instância EC2. Mas antes é necessário criar as regras de `Security Group`. Para configurar o tráfego da EC2, há a necessidade de criar um Security group. Agora, no console da AWS pesquise pelo serviço de `EC2` e navegue até `Security Group`. Basta criá-lo de acordo com suas necessidades. No na parte de configuração de regras de entrada, criei duas, uma permitindo o tráfego HTTP para qualquer lugar, e outra SSH para o meu IP. Assim como na imagem. As regras de saída deixar o padrão.
-![alt text](image-14.png)
+1️⃣ Acesse a seção de Subnets no console da AWS
 
-Agora, para criar de fato a instância EC2, no console da AWS pesquise pelo serviço de `EC2`. Navegue até a sessão de `Instâncias` e crie uma de acordo com suas necessidades. No meu caso, escolhi a AMI baseada em Amazon Linux 2023.
-![alt text](AMI.png)
+2️⃣ Crie quatro subnets:  
+   - **Duas públicas** (acessíveis pela internet)  
+   - **Duas privadas** (acessíveis apenas dentro da VPC) 
 
-Durante a criação da EC2, ainda é necessário passar pelas `Configurações de Rede`. Nessa parte, as configurações devem estar assim como na imagem abaixo, na VPC criada, assim como na subnet pública, com o IP automático habilitado e no security group. Além disso, vincule uma chave SSH à ela, se voê não tiver, é só criar, pois mais tarde usaremos para conectar à EC2.
-![alt text](networksettings.png)
+3️⃣ Distribua as subnets entre diferentes zonas de disponibilidade, por exemplo:  
+   - **us-east-1a** → 1 subnet pública e 1 privada  
+   - **us-east-1b** → 1 subnet pública e 1 privada  
 
-### 1.3 Acessar a instância via SSH 
-Agora todo o seu ambiente estará configurado. Por fim, basta acessar a EC2 via SSH. Para isso, selecione a EC2 e clique em `connect` como na imagem abaixo.
-![alt text](connect.png)
+Isso melhora a **alta disponibilidade** do ambiente, garantindo que, caso uma zona fique indisponível, a outra ainda estará funcionando.  
 
-Após isso irá aparecer o passo a passo a ser seguido como na imagem abaixo. Você pode executá-lo no `Git Bash` ou no próprio terminal do `Visual Studio Code`. Em ambos, navegue até a paste onde você baixou a sua chave SSH e execute:
-![alt text](ssh.png)
+![alt text](imgs/image-10.png)  
 
-Para modificar o acesso da chave SSH.
+Após a criação, as subnets aparecerão listadas no console da AWS:  
+
+![alt text](imgs/image-11.png)  
+
+---
+
+#### 🔹 Configurar Acesso à Internet  
+
+Por padrão, uma VPC recém-criada não tem conexão direta com a internet. Para permitir que as **subnets públicas** acessem a internet (e sejam acessadas externamente), precisamos configurar dois elementos fundamentais:  
+
+✅ **Internet Gateway (IGW)** → Responsável por fornecer acesso à internet para os recursos da VPC  
+✅ **Route Table** → Controla como o tráfego é roteado dentro da VPC  
+
+#### 🔹 Criando um Internet Gateway  
+O **Internet Gateway (IGW)** é um componente que permite que recursos dentro da VPC se comuniquem com a internet. Sem ele, mesmo que a instância tenha um IP público, não será possível acessar nada externo.  
+
+1️⃣ No console da AWS, vá até **Internet Gateway** e clique em **Criar Internet Gateway**.  
+2️⃣ Após a criação, é necessário anexá-lo à VPC clicando em **Attach to VPC**.  
+
+![alt text](imgs/image-12.png)  
+![alt text](imgs/image-13.png)  
+
+#### 🔹 Criando uma Route Table  
+A **Route Table** define quais caminhos (rotas) o tráfego de rede deve seguir dentro da VPC. Por padrão, todas as subnets criadas usam a **route table principal**, que só permite comunicação interna.  
+
+Para permitir que as **subnets públicas** acessem a internet:  
+
+1️⃣ Vá até **Route Tables** no console da VPC e crie uma nova tabela de rotas.  
+2️⃣ Adicione uma **rota com destino `0.0.0.0/0`** apontando para o **Internet Gateway (IGW)** criado anteriormente. Isso garante que qualquer tráfego externo será roteado para a internet.  
+
+![alt text](imgs/image-15.png)  
+![alt text](imgs/image-16.png)  
+
+3️⃣ Agora, associe as **subnets públicas** a essa nova Route Table:  
+   - Vá até **Subnet Associations**  
+   - Edite e selecione as duas **subnets públicas**  
+
+![alt text](imgs/image-17.png)  
+
+Agora, suas **subnets públicas** podem acessar a internet!  
+
+---
+
+### 1.2 Criar uma instância EC2  
+Com a VPC configurada, podemos criar uma **instância EC2**, que será o servidor web do nosso projeto.  
+
+Antes disso, é essencial configurar um **Security Group**, que atua como um firewall controlando o tráfego de entrada e saída da instância.  
+
+#### 🔹 Criando um Security Group  
+No console da AWS, acesse **EC2 → Security Groups** e crie um novo com as seguintes regras:  
+
+✅ **Regra de entrada:**  
+   - **HTTP (porta 80)** → Permite tráfego de qualquer origem (`0.0.0.0/0`)  
+   - **SSH (porta 22)** → Permite apenas o acesso do seu IP (`Meu IP`) para garantir segurança  
+
+✅ **Regra de saída:**  
+   - Permitir todo o tráfego de saída (padrão)
+
+![alt text](imgs/image-14.png)  
+
+Agora podemos criar a instância EC2:  
+
+1️⃣ No console da AWS, vá até **EC2 → Instâncias** e clique em **Criar Instância**  
+2️⃣ Escolha a **AMI Amazon Linux 2023**  
+3️⃣ **Configure uma chave SSH** para permitir acesso remoto à instância 
+
+4️⃣ Configure as opções de rede:  
+   - Selecione a **VPC criada** anteriormente  
+   - Escolha uma **subnet pública**  
+   - Ative o **IP público automático**  
+   - Associe o **Security Group** criado  
+
+
+![alt text](imgs/AMI.png)  
+![alt text](imgs/networksettings.png)  
+
+---
+
+### 1.3 Acessar a instância via SSH  
+
+Agora que a EC2 está criada, podemos acessá-la via **SSH**.  
+
+No console da AWS, selecione a instância e clique em **Connect**. A AWS fornecerá instruções para conexão via terminal:  
+
+![alt text](imgs/connect.png)  
+
+> **Nota de Atenção**:  
+> Os comandos descritos foram executados no terminal do Visual Studio Code, localizado na pasta onde a chave SSH foi baixada. Certifique-se de estar na pasta correta com a chave SSH configurada para garantir que todas as conexões e comandos relacionados ao seu servidor EC2 funcionem corretamente.
+
+Antes de conectar, precisamos alterar as permissões da chave SSH,  deixando a chave acessível apenas para o proprietário (400 significa somente leitura para o dono), com o comando:  
 ```bash
 chmod 400 "suaChave.pem"
 ```
 
-Para entrar na EC2
+Agora podemos conectar à EC2 executando:
 ```bash
 ssh -i "suaChave.pem" ec2-user@IpPublicoDaEC2
 ```
 
-Pronto, você está dentro da EC2!
-![alt text](image-19.png)
+Caso tudo esteja certo, veremos a tela de conexão:
+![alt text](imgs/image-19.png)
 
 
-## 2. Configuração do servidor 
-### 2.1 Instalar o servidor Nginx na EC2
-Para configurar o servidor, nessa etapa é necessário instalar o servidor web Nginx na EC2. Primeiro, abra o Visual Studio COde conectado à instância EC2. Em seguida, é necessário fazer a seguinte verificação:
+## 2. Configuração do Servidor  
 
-Para verificar se há alguma verificação pendente, execute:
+### 2.1 Instalar o servidor Nginx na EC2  
+
+O **Nginx** é um servidor web leve e de alto desempenho, amplamente utilizado para hospedar sites e aplicações web. Nesta etapa, instalaremos e configuraremos o Nginx na nossa instância EC2.  
+
+#### 🔹 Conectando-se à EC2  
+
+Antes de iniciar a configuração, certifique-se de que está conectado à instância EC2 via **SSH** ou através do **Visual Studio Code**.  
+
+Se estiver usando o terminal SSH, conecte-se com:  
+```bash
+ssh -i "suaChave.pem" ec2-user@IpPublicoDaEC2
+```
+
+#### 🔹 Atualizar pacotes do sistema
+É recomendável atualizar os pacotes do sistema antes da instalação, garantindo que todas as dependências estejam atualizadas. Para isso, execute:
+
 ```bash
 sudo dnf update -y
 ```
@@ -94,9 +187,10 @@ sudo dnf install nginx -y
 ```
 
 Após a instalação ser concluída, a seguinte mensagem aparecerá:
-![alt text](image.png)
+![alt text](imgs/image.png)
 
-Entretanto, deve-se iniciar o Nginx. Como o serviço do Nginx por padrão vem desabilitado, essa ação é necessária. Para efetuar essa ações é necessário executar os seguintes comandos:
+#### 🔹 Iniciar e habilitar o Nginx
+Por padrão, o serviço do Nginx vem desabilitado no sistema. Para garantir que ele seja iniciado e configurado para rodar automaticamente no boot, execute:
 ```bash
 sudo systemctl start nginx
 ```
@@ -104,203 +198,291 @@ sudo systemctl start nginx
 sudo systemctl enable nginx
 ```
 
-Depois de seguir essas etapas, verifique se o serviço do Nginx está ativo na sua EC2 com:
+#### 🔹 Verificar se o Nginx está rodando
+Para confirmar se o Nginx foi iniciado corretamente, execute:
 ```bash
 sudo systemctl status nginx
 ```
 
 A seguinte mensagem irá aparecer se o servidor estiver funcionando:
-![alt text](image-2.png)
+![alt text](imgs/image-2.png)
 
-Ao fim, para testar, basta copiar o IP público da sua instância e colar no navegador. A página que deve ser exibida é: 
-![alt text](image-1.png)
+#### 🔹 Testar no navegador
+Copie o IP público da sua instância e cole no navegador. A página padrão do Nginx será exibida:
+![alt text](imgs/image-1.png)
 
 ### 2.2 Criar uma página HTML simples
-Nessa parte, você irá editar a página HTML que está no servidor de acordo com às suas necessidades. O arquivo index.html geralmete fica em `cd /usr/share/nginx/html`. Para editar o arquivo basta executar: 
+Agora, personalizaremos a página inicial do servidor web. O arquivo principal do site geralmente fica no seguinte diretório:  
+```bash
+cd /usr/share/nginx/html
+```
+
+Para editar o arquivo index.html:
+diretório:  
 ```bash
 sudo nano index.html
 ```
-Depois, basta modificar como deseja e atualizar a página do navegador que as novas informaçõe serão carregadas. De acordo com as orientações do desafio, eu preciso colocar informações sobre o projeto, logo, a minha página HTML ficou assim:
 
-![alt text](image-3.png)
+Modifique o conteúdo conforme desejar e salve (CTRL + X, Y, Enter).
 
-Após a configuração da página, um dos requsitos do projeto é criar um serviço sustemd para garantir que o Nginx reinicie automaticamente se parar. Para isso você deve criar um arquivo `override.conf` para fazer as configurações necessárias. O recomendado pelo `systemd` é criar outro arquivo para nao modificar o original, para evitar que atualizações do Nginx sobrescrevam a configuração. Para criar o arquivo, execute:
+Após editar, atualize a página no navegador para ver as mudanças.
+
+No meu caso, como preciso adicionar informações sobre o projeto, minha página HTML ficou assim:
+
+![alt text](imgs/image-3.png)
+
+### 2.3 Garantir que o Nginx reinicie automaticamente
+Para evitar que o serviço do Nginx fique offline caso ele falhe ou o servidor reinicie, criaremos uma configuração no systemd para garantir que ele seja reiniciado automaticamente.
+
+#### 🔹 Criar um arquivo de configuração no systemd
+#### 📌 Systemd
+O systemd é um sistema de gerenciamento de serviços e inicialização em Linux, responsável por iniciar e controlar processos do sistema.
+
+O recomendado pelo systemd é criar um arquivo separado em vez de modificar o original, pois isso evita que atualizações do Nginx sobrescrevam as alterações.
+
+Crie o arquivo de configuração em:
 
 ```bash
 sudo nano /etc/systemd/system/nginx.service.d/override.conf
 ```
 
-Dentro dele, insira as linhas abaixo. Dessa forma, o sistema irá reiniciar sempre que ele parar em 5 segundos.
+Dentro do arquivo, adicione o seguinte conteúdo:
 ```bash 
 [Service]
 Restart=always
 RestartSec=5
 ```
-Para recarregar o deamon a fim de que ele reconheça as mudanças.
+Isso fará com que o sistema tente reiniciar o Nginx sempre que ele parar, com um intervalo de 5 segundos entre cada tentativa.
+
+#### 🔹 Aplicar as alterações
+#### 📌 Daemon
+Um daemon é um programa que roda em segundo plano, sem interação direta com o usuário, geralmente realizando tarefas contínuas ou agendadas, como servidores de rede ou processos de monitoramento.
+
+Depois de criar o arquivo, recarregue o daemon do systemd para que ele reconheça as mudanças:
 ```bash
 sudo systemctl daemon-reload
 ```
 
-Para reiniciar o serviço do Nginx.
+Reinicie o serviço do Nginx:
 ```bash
 sudo systemctl restart nginx 
 ```
+Agora, se o Nginx for finalizado, ele será reiniciado automaticamente.
 
-Para simular uma parada, mate o processo com:
+#### 🔹 Testar a configuração
+Para simular uma falha e verificar se o sistema está reiniciando o Nginx corretamente, mate o processo com:
 ```bash
 sudo pkill -9 nginx
 ```
 
-Verifique o status do serviço do Nginx novamente. Ele estará como `ativo` por 4 segundos atrás, observe na imagem abaixo.
+Agora, verifique o status do serviço novamente:
 ```bash
  sudo systemctl status nginx
  ```
 
- ![alt text](image-20.png)
+ Se a configuração estiver correta, o serviço será reiniciado automaticamente e você verá algo como:
+ ![alt text](imgs/image-20.png)
 
-## 3. Monitoramento e notificações
-### 3.1 Criar um script em Python para monitorar o site
-Os requisitos do script são:
-Verificar se o site responde corretamente a uma requisição HTTP.
-Criar logs das verificações em /var/log/monitoramento.log.
-Enviar uma notificação via Discord, Telegram ou Slack se detectar indisponibilidade.
+## 3. Monitoramento e Notificações  
 
-Antes de criar o script é necessário criar um arquivo de log e um servidor no Discord, pois conforme as orientações do projeto, deve existir um log das verificações do projeto e caso haja detecção de indisponibilidade do site, uma notificação deve ser enviada ao Discord pelo webhook.
+Garantir que o site esteja sempre disponível é essencial para evitar problemas e garantir uma boa experiência ao usuário. Para isso, será criado um script em Python que irá monitorar a disponibilidade do site, registrar logs das verificações e enviar notificações para um servidor do Discord caso o site fique indisponível.
 
-No VSCode, para criar um arquivo de log, execute
-```bash
-sudo touch /var/log/monitoramento.log
+---
+
+### 3.1 Criar um script em Python para monitorar o site  
+
+O script de monitoramento terá os seguintes requisitos:
+
+✅ Verificar se o site responde corretamente a uma requisição HTTP.  
+✅ Criar logs das verificações no arquivo `/var/log/monitoramento.log`.  
+✅ Enviar uma notificação para um servidor do Discord caso o site fique fora do ar.  
+
+Antes de criar o script, é necessário:
+1. **Criar o arquivo de log** para armazenar as verificações:
+   ```bash
+   sudo touch /var/log/monitoramento.log
+   ```
+2. **Criar um servidor no Discord** chamado `notificações-nginx`.  
+3. **Criar um webhook no Discord** para receber as notificações:
+   - Vá até o servidor criado.
+   - Clique no ícone de Configurações do Servidor.
+   - Vá para **Integrações > Webhooks**.
+   - Crie um novo webhook chamado `Notificação`.
+   - **Copie a URL do webhook**, pois será utilizada no script.
+
+---
+
+### 3.2 Criar o script de monitoramento  
+O script será salvo em `/opt` pelo fato de que scripts adicionais ao sistema são localizados nesse diretório. Ele será nomeado como `monitoramento.py`.
+
+1. Acesse o diretório correto:
+   ```bash
+   cd /opt
+   ```
+2. Crie o arquivo:
+   ```bash
+   sudo nano monitoramento.py
+   ```
+3. Agora, escreva o código do script.
+
+#### 🔹 Bibliotecas necessárias
+#### 📌 Requests
+A biblioteca `requests` é uma ferramenta para fazer requisições HTTP em Python. Ela permite enviar requisições como GET, POST, PUT, DELETE, entre outras. É muito utilizada para acessar dados pela web.
+
+O script usará a biblioteca `requests` para realizar as requisições HTTP. Para importá-la, adicione:
+```python
+import requests
 ```
 
-Com o Discord aberto, crie um servidor com o nome de `notificações-nginx`. Para criar um webhook, clique no ícone de engrenagem ao lado do nome do servidor, clique em integrações, navegue até webhook e crie um novo com o nome de `Notificação`. É necessário copiar a URL do webhook, pois será utilizada no script.
 
-### 3.2 Requisitos do script em Python 
-O script deve ser criado com o nome de `monitoramento.py` dentro de `cd /opt`. 
-
-Para criar o script de monitoramento:
-```bash
-cd /opt
-sudo nano monitoramento.py
+#### 🔹 Definir variáveis principais
+Adicione as seguintes linhas no seu script para armazenar a URL do site, a URL do webhook e o caminho do arquivo de logs:
+```python
+url = "https://seusite.com"
+webhook = "https://discord.com/api/webhooks/SEU_WEBHOOK"
+log_file = "/var/log/monitoramento.log"
 ```
 
-Agora, basta escrever o script. Deve utilizar a biblioteca `Requests` para enviar e receber informações da internet. Para importar:
+#### 🔹 Criar função para registrar logs
+Essa função permitirá armazenar todas as verificações no arquivo de log. Ela recebe uma mensagem como parâmetro e a adiciona ao arquivo de log. O modo `"a"` (append) garante que as novas mensagens sejam adicionadas ao final do arquivo, sem sobrescrever os logs anteriores
+```python
+def registrar_log(mensagem):
+    with open(LOG_FILE, "a") as log:
+        log.write(mensagem + "\n")
+```
 
-![alt text](image-4.png)
+#### 🔹 Criar função para verificar a disponibilidade do site 
+Esta função tenta acessar o site e verifica se ele responde corretamente (código 200), significa que o site está acessível. Caso contrário, um erro será registrado no log e uma notificação será enviada ao Discord.
 
-Depois, deve-se armazenar em variáveis a URL do site, a URL do webhook e o caminho do arquivo de logs. Para isso, adicione as seguintes linhas no seu script
-![alt text](image-5.png)
+```python
+def verificar_site():
+    try:
+        res = requests.get(URL_SITE, timeout=10)
+        if res.status_code == 200:
+            mensagem = f"✅ Site OK!"
+        else:
+            mensagem = f"⚠️ Site retornou um status inesperado: {res.status_code}"
+            enviar_notificacao(mensagem)
+        registrar_log(mensagem)
+    except requests.RequestException as erro:
+        mensagem = f"❌ Site INDISPONÍVEL! Erro: {erro}"
+        registrar_log(mensagem)
+        enviar_notificacao(mensagem)
+```
 
-Criar uma função para registrar os logs dentro do arquivo criado anteriormente
+#### 🔹 Criar função para enviar notificações ao Discord
+Esta função monta um JSON com a mensagem de erro e usa a URL do webhook do Discord para enviar a notificação. Dessa forma, sempre que o site ficar fora do ar, um alerta será enviado.
+```python
+def enviar_notificacao(mensagem):
+    dados = {"content": mensagem}
+    requests.post(WEBHOOK_URL, json=dados)
+```
 
-![alt text](image-6.png)
-
-Criar uma função para verificar se o site responde corretamente a uma requisição HTTP. A função tenta acessar o site com o requests atráves do método get passando a URL e um tempo de 10 segundos. O código de status é armazenado em uma variável. Se o código for igual a 200, uma mensagem indicando que o site está ativo é exibida. Caso contrário, dará erro, o qual é tratado com `RequestException` exibindo a mensagem de erro. A mensagem de erro também é armazenada no arquivo de log. E também se entrar dentro desse tratamento de erro, a mensagem é enviada ao Discord com a função `enviar_notificação`, que será explicada posteriormente. 
-![alt text](image-7.png)
-
-Criar a função de enviar notificação ao Discord. Nela, um dicionário é criado com as mensagens de erro, e depois enviado ao webhook por meio do método `post`como um JSON. É importante ressaltar que o Webhook espera receber os dados como um objeto JSON.
-
-![alt text](image-8.png)
-
-
-![alt text](image-21.png)
-
-Por fim, é necessário fornecer pemissão de execução ao script, então execute:
+#### 🔹 Tornar o script executável
+Para que o script possa ser executado diretamente, conceda permissão de execução:
 ```bash
 sudo chmod +x /opt/monitoramento.py
 ```
 
-### 3.3 Configurar o scrpit para rodar automaticamente a cada 1 minuto
-Para fazer essa configuração, utilize o crontab. Se você não tiver instalado, basta seguir o passo à passo a seguir:
+---
 
-Para instalar 
-```bash 
-sudo yum install cronie
-```
+### 3.3 Automatizar a execução do script a cada 1 minuto  
+Vamos configurar o **Crontab** para que o script seja executado a cada 1 minuto.
 
-Para habilitar o serviço
+### 🔹 O que é o Crontab?
+O `cron` é um agendador de tarefas do Linux que permite executar comandos automaticamente em intervalos de tempo definidos.
+
+#### 🔹 Instalar e ativar o serviço `crond` (caso ainda não esteja instalado):
 ```bash
+sudo yum install cronie -y
 sudo systemctl enable crond
-```
-
-Para inciar o serviço
-```bash
 sudo systemctl start crond
-```
-
-Verificar se o serviço está como `Active`
-```bash
 sudo systemctl status crond
 ```
+Se o serviço estiver ativo, continue para o próximo passo.
 
-![alt text](image-22.png)
-
-Após seguir o passo à passo, deve-se realizar a configuração. Para isso, execute:
-
+#### 🔹 Configurar o `cron` para executar o script a cada minuto:
 ```bash
 crontab -e
 ```
-
-Adicione a seguinte linha e depois pressione `ESC` e `:wq` para sair no VI.
+Adicione a seguinte linha no final do arquivo:
 ```bash
 * * * * * /usr/bin/python3 /opt/monitoramento.py >> /var/log/monitoramento.log 2>&1
 ```
 
-Após editado, o script começará a ser executado automaticamente, entretanto, ainda é necessário conceder a permissão de escrita ao arquivo de log. Para isso, execute:
+Isso garante que o script seja executado automaticamente a cada minuto. Além disso, tanto mensagens normais quanto mensagens de erro serão registradas no log, facilitando a depuração caso algo dê errado no script.
 
+Pressione `ESC`, depois `:wq` para salvar e sair.
+
+#### 🔹 Garantir permissão de escrita no arquivo de log:
+Alterar as permissões do arquivo de log para permitir que qualquer usuário do sistema possa ler e escrever nele.
 ```bash
 sudo chmod 666 /var/log/monitoramento.log
 ```
 
-## 4. Automação e Testes
-### 4.1 Testar a implementação
-Primeiro, verifique se o site está acessível via navegador. Basta copiar o IP pública da sua EC2 e colar no navegador. No meu caso, devido as minhas configurações de HTML e CSS, a minha página irá aparecer assim:
-![alt text](image-3.png)
+✅ O primeiro 6 → Permissão de leitura (r) e escrita (w) para o dono do arquivo.
 
-Agora, iremos para o teste do servidor em si. Para rodar o scrip Python, execute:
+✅ O segundo 6 → Permissão de leitura (r) e escrita (w) para o grupo do arquivo.
+
+✅ O terceiro 6 → Permissão de leitura (r) e escrita (w) para outros usuários.
+
+Agora, o script será executado automaticamente a cada minuto! 
+
+---
+
+## 4️. Automação e Testes  
+
+### 4.1 Testar a implementação  
+
+#### 🔹 Testar se o site está acessível 
+Abra o navegador e digite o IP público da sua EC2. Se tudo estiver configurado corretamente, a página deverá carregar normalmente. 
+
+#### 🔹 Rodar o script manualmente para testar
+Executar o script de monitoramento manualmente para garantir que ele esteja funcionando como esperado. Esse comando executa o script Python monitoramento.py, localizado em /opt/. 
 ```bash
-python3 monitoramento.py
+python3 /opt/monitoramento.py
 ```
-Para verificar se a página está respondendo à requisições HTTP, execute:
+
+#### 🔹 Verificar os logs em tempo real
+Monitorar os logs gerados pelo script em tempo real para identificar problemas ou comportamentos inesperados. O comando `tail -f `exibe as últimas linhas de um arquivo e continua atualizando a tela com novas entradas do arquivo. 
 ```bash
 tail -f /var/log/monitoramento.log
 ```
-Com isso, a cada minuto o script vai rodar automaticamente, se a página estiver respondendo à requisições HTTP, isso irá aparecer na tela a cada minuto. Para parar a verificação, é só pressionar `CTRL + C`.
 
-![alt text](image-24.png)
+![alt text](imgs/image-24.png)
 
-Agora para simular um erro, pare o serviço do Nginx, rode o script e verifique se a página está respondendo.
-
-Para parar o serviço do Nginx:
-```bash 
+#### 🔹 Simular um erro 
+Testar se o script consegue identificar e registrar erros adequadamente. O comando `systemctl stop nginx` para o serviço do Nginx, que é responsável por servir o site, isso simula uma falha no servidor web. Parando o serviço do Nginx, você cria uma condição de erro que deve ser registrada pelo script. O script deve detectar que o serviço Nginx não está funcionando e gerar uma notificação de falha.
+```bash
 sudo systemctl stop nginx
 ```
-Para rodar o script:
+Execute novamente o script após a falha do Nginx. O script deve verificar o estado do Nginx e registrar o erro no log.
 ```bash
-python3 monitoramento.py
+python3 /opt/monitoramento.py
 ```
-Para verificar se a página está respondendo à requisições HTTP, execute:
+Confirmar que a falha foi registrada no log e que o comportamento do script está correto.
 ```bash
 tail -f /var/log/monitoramento.log
 ```
+Se tudo estiver funcionando, mensagens de erro aparecerão no log e uma notificação será enviada ao Discord. 
+![alt text](imgs/image-25.png)
 
-As mensagens de erro já irão começar a aparecer na sua tela assim:
-![alt text](image-25.png)
+![alt text](imgs/image-26.png)
 
-Ao abrir o servidor do `Discord` as notificações de `Site INDISPONÍVEL` também já estarão registradas.
-![alt text](image-26.png)
 
-Se você quiser verificar os logs dentro do arquivo que foi criado, execute:
-
-Navegue até a basta onde se encontra o arquivo de log: 
-```bash 
-cd /var/log
+#### 🔹 Reiniciar o Nginx após o teste
+Restaurar o serviço Nginx para garantir que o sistema volte ao funcionamento normal.
+```bash
+sudo systemctl start nginx
 ```
 
-Peça para exibir o conteúdo do arquivo com:
-```bash 
+#### 🔹 Visualizar todos os logs registrados
+Verificar o log completo para garantir que todos os eventos, incluindo falhas e recuperação, foram registrados corretamente. O comando cd /var/log muda o diretório de trabalho para o diretório de logs do sistema. O comando cat monitoramento.log exibe o conteúdo completo do arquivo de log monitoramento.log.
+```bash
+cd /var/log
 cat monitoramento.log
 ```
 
-Na imagem a seguir mostra todos os logs dos testes que eu realizei
-![alt text](image-27.png)
+![alt text](imgs/image-27.png)
 
+Agora o seu sistema de monitoramento está funcionando automaticamente!
