@@ -415,7 +415,7 @@ Adicione a seguinte linha no final do arquivo:
 ```
 
 A sequência de asteriscos representa a agenda de execução do cron, onde cada asterisco indica um campo específico do tempo:
-![alt text](image.png)
+![alt text](imgs/cron.png)
 
 Todos os campos estão preenchidos com asterisco, o que significa que o script será executado a cada minuto, todos os dias, o tempo todo. Além disso, tanto mensagens normais quanto mensagens de erro serão registradas no log, facilitando a depuração caso algo dê errado no script.
 
