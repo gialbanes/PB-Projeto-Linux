@@ -494,8 +494,12 @@ cat monitoramento.log
 O projeto foi concluído com sucesso, resultando em um ambiente seguro, automatizado e monitorado na AWS. Através da implementação de uma VPC estruturada com subnets públicas e privadas, a configuração de uma instância EC2 com Nginx e a automação do monitoramento com scripts e notificações, o sistema agora possui uma infraestrutura confiável para hospedar aplicações web.
 
 Os principais objetivos foram alcançados:
+
 ✅ Configuração de rede com controle de tráfego adequado.
+
 ✅ Implementação de servidor web acessível via domínio/IP público.
+
 ✅ Monitoramento contínuo para detectar falhas e alertar via webhook.
+
 ✅ Automação de processos para garantir eficiência e segurança.
 
