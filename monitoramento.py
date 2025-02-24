@@ -1,6 +1,6 @@
 import requests
 
-url = "http://44.200.202.239"
+url = "http://localhost"
 webhook = "https://discord.com/api/webhooks/1339960739191853126/lFQ5uZvEtgZjx0icODuV8nLcimEDGNy35GltUYWEUP4pv9jyH0trymxqo4GCLIy8pVPa"
 log_file = "/var/log/monitoramento.log"
 
