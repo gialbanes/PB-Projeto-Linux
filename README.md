@@ -20,10 +20,10 @@ Desenvolver e testar habilidades em **Linux**, **AWS** e **automação de proces
 </p> 
 
 ## 📑 Índice  
-1. [Configuração do Ambiente](#configuração-do-ambiente)  
-2. [Configuração do Servidor](#configuração-do-servidor)  
-3. [Monitoramento e Notificações](#monitoramento-e-notificações)  
-4. [Automação e Testes](#automação-e-testes)  
+1. [Configuração do Ambiente](#1-configuração-do-ambiente)  
+2. [Configuração do Servidor](#2-configuração-do-servidor)  
+3. [Monitoramento e Notificações](#3-monitoramento-e-notificações)  
+4. [Automação e Testes](#4️-automação-e-testes)  
 
 
 ## 1. Configuração do Ambiente  
@@ -298,22 +298,26 @@ O script de monitoramento terá os seguintes requisitos:
 ✅ Enviar uma notificação para um servidor do Discord caso o site fique fora do ar.  
 
 Antes de criar o script, é necessário:
-1. **Criar o arquivo de log** para armazenar as verificações:
+1. **Criar o arquivo de log** dentro da EC2 para armazenar as verificações:
    ```bash
    sudo touch /var/log/monitoramento.log
    ```
-2. **Criar um servidor no Discord** chamado `notificações-nginx`.  
+2. **Criar um servidor no Discord** chamado `notificações-nginx`. 
+   - Basta clicar no ícone de "+" no canto superior esquerdo e criar o seu servidor.
+   ![alt text](imgs/servidor.png)
+
 3. **Criar um webhook no Discord** para receber as notificações:
    - Vá até o servidor criado.
    - Clique no ícone de Configurações do Servidor.
    - Vá para **Integrações > Webhooks**.
    - Crie um novo webhook chamado `Notificação`.
    - **Copie a URL do webhook**, pois será utilizada no script.
+   ![alt text](imgs/webhook.png)
 
 ---
 
 ### 3.2 Criar o script de monitoramento  
-O script será salvo em `/opt` pelo fato de que scripts adicionais ao sistema são localizados nesse diretório. Ele será nomeado como `monitoramento.py`.
+O script será criado diretamente dentro da instância EC2, pois ele precisa rodar no próprio servidor para monitorar o site de forma eficiente. Para manter a organização do sistema, o arquivo será salvo no diretório `/opt`, que é o local padrão para armazenar scripts e softwares adicionais que não fazem parte do sistema operacional principal.
 
 1. Acesse o diretório correto:
    ```bash
@@ -352,7 +356,7 @@ def registrar_log(mensagem):
 ```
 
 #### 🔹 Criar função para verificar a disponibilidade do site 
-Esta função tenta acessar o site e verifica se ele responde corretamente (código 200), significa que o site está acessível. Caso contrário, um erro será registrado no log e uma notificação será enviada ao Discord.
+Esta função tenta acessar o site a cada 10 segundos e verifica se ele responde corretamente (código 200), significa que o site está acessível. Caso contrário, um erro será registrado no log e uma notificação será enviada ao Discord.
 
 ```python
 def verificar_site():
@@ -410,7 +414,10 @@ Adicione a seguinte linha no final do arquivo:
 * * * * * /usr/bin/python3 /opt/monitoramento.py >> /var/log/monitoramento.log 2>&1
 ```
 
-Isso garante que o script seja executado automaticamente a cada minuto. Além disso, tanto mensagens normais quanto mensagens de erro serão registradas no log, facilitando a depuração caso algo dê errado no script.
+A sequência de asteriscos representa a agenda de execução do cron, onde cada asterisco indica um campo específico do tempo:
+![alt text](image.png)
+
+Todos os campos estão preenchidos com asterisco, o que significa que o script será executado a cada minuto, todos os dias, o tempo todo. Além disso, tanto mensagens normais quanto mensagens de erro serão registradas no log, facilitando a depuração caso algo dê errado no script.
 
 Pressione `ESC`, depois `:wq` para salvar e sair.
 
@@ -425,8 +432,6 @@ sudo chmod 666 /var/log/monitoramento.log
 ✅ O segundo 6 → Permissão de leitura (r) e escrita (w) para o grupo do arquivo.
 
 ✅ O terceiro 6 → Permissão de leitura (r) e escrita (w) para outros usuários.
-
-Agora, o script será executado automaticamente a cada minuto! 
 
 ---
 
@@ -485,4 +490,12 @@ cat monitoramento.log
 
 ![alt text](imgs/image-27.png)
 
-Agora o seu sistema de monitoramento está funcionando automaticamente!
+## 🏁 Conclusão
+O projeto foi concluído com sucesso, resultando em um ambiente seguro, automatizado e monitorado na AWS. Através da implementação de uma VPC estruturada com subnets públicas e privadas, a configuração de uma instância EC2 com Nginx e a automação do monitoramento com scripts e notificações, o sistema agora possui uma infraestrutura confiável para hospedar aplicações web.
+
+Os principais objetivos foram alcançados:
+✅ Configuração de rede com controle de tráfego adequado.
+✅ Implementação de servidor web acessível via domínio/IP público.
+✅ Monitoramento contínuo para detectar falhas e alertar via webhook.
+✅ Automação de processos para garantir eficiência e segurança.
+
