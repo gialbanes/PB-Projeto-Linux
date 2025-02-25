@@ -24,6 +24,8 @@ Desenvolver e testar habilidades em **Linux**, **AWS** e **automação de proces
 2. [Configuração do Servidor](#2-configuração-do-servidor)  
 3. [Monitoramento e Notificações](#3-monitoramento-e-notificações)  
 4. [Automação e Testes](#4️-automação-e-testes)  
+5. [Desafio bônus](#5-desafio-bônus)
+6. [Conclusão](#6-conclusão)
 
 
 ## 1. Configuração do Ambiente  
@@ -491,7 +493,7 @@ cat monitoramento.log
 ![alt text](imgs/image-27.png)
 
 
-## 🏆 Desafio Bônus
+##  5. Desafio Bônus
 A fim de aprofundar o projeto e testar recursos na AWS, irei criar uma automação com user data em que irei configurar a EC2 para já iniciar com o Nginx, HTML e o script de monitoramento. 
 
 Para isso, é necessário colocar o user data no momento de criação da instância. Inicialmente, crie a instância conforme foi sugerido anteriormente, mas antes de clicar no botão `Launch instance` vá até a aba de `Advanced details` e role até o fim em `User data`. Lá, cole o userdata.sh que está nesse repositório. Ficará assim: 
@@ -688,7 +690,7 @@ A saída deve ser:
 Abrir o WebHook do Discord pra ver se uma notificação foi enviada, assim: 
 ![alt-text](imgs/image-26.png)
 
-## 🏁 Conclusão
+## 6. Conclusão
 O projeto foi concluído com sucesso, resultando em um ambiente seguro, automatizado e monitorado na AWS. Através da implementação de uma VPC estruturada com subnets públicas e privadas, a configuração de uma instância EC2 com Nginx e a automação do monitoramento com scripts e notificações, o sistema agora possui uma infraestrutura confiável para hospedar aplicações web.
 
 Os principais objetivos foram alcançados:
