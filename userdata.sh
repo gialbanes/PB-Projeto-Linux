@@ -2,7 +2,7 @@
 # Atualiza o sistema e instala o nginx
 sudo yum update -y && sudo yum install nginx -y
 
-# Instala o cron (cronie) e ativa o serviço
+# Instala o cron e ativa o serviço
 sudo yum install cronie -y
 sudo systemctl enable crond --now
 
