@@ -490,6 +490,204 @@ cat monitoramento.log
 
 ![alt text](imgs/image-27.png)
 
+
+## 🏆 Desafio Bônus
+A fim de aprofundar o projeto e testar recursos na AWS, irei criar uma automação com user data em que irei configurar a EC2 para já iniciar com o Nginx, HTML e o script de monitoramento. 
+
+Para isso, é necessário colocar o user data no momento de criação da instância. Inicialmente, crie a instância conforme foi sugerido anteriormente, mas antes de clicar no botão `Launch instance` vá até a aba de `Advanced details` e role até o fim em `User data`. Lá, cole o userdata.sh que está nesse repositório. Ficará assim: 
+![alt text](imgs/userdata.png)
+
+#### 🔹Entendendo o script de automação 
+> **Nota de Atenção**:  
+> O script deve iniciar com #!/bin/bash.
+
+> **Nota de Atenção**:  
+> Todos os códigos contidos no scrip foram os executados manualmente anteriormente, agora só estou automatizando o processo.
+
+Atualização do sistema e instalação do Nginx:
+```bash
+sudo yum update -y && sudo yum install nginx -y
+```
+Instalação e ativação do Cron:
+```bash
+sudo yum install cronie -y
+sudo systemctl enable crond --now
+```
+
+Criação da página HTML: O código HTML foi inserido diretamente no diretório `/usr/share/nginx/html/index.html`, contendo informações sobre o projeto.
+```bash
+sudo cat << 'EOF' > /usr/share/nginx/html/index.html
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto do Estágio - Giovana</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            text-align: justify;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        .content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 0.8em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Projeto: Configuração de Servidor Web com Monitoramento</h1>
+        <div class="content">
+            <h2>Objetivo do Projeto</h2>
+            <p>Desenvolver e testar habilidades em Linux, AWS e automação de processos através da configuração de um ambiente de servidor web monitorado.</p>
+
+            <h3>Tecnologias Utilizadas</h3>
+            <ul>
+                <li>AWS EC2</li>
+                <li>Linux</li>
+                <li>Nginx</li>
+            </ul>
+        </div>
+        <div class="footer">
+            <p>Desenvolvido por Giovana da Silva Albanês Santos</p>
+        </div>
+    </div>
+</body>
+</html>
+EOF
+``` 
+
+Script de monitoramento: Criado um script Python `/opt/monitoramento.py` que verifica a disponibilidade do site e envia notificações via webhook do Discord em caso de falhas. O script é executado automaticamente a cada 1 minuto via cron:
+```bash
+sudo cat << 'EOF' > /opt/monitoramento.py
+import requests
+
+url = "http://localhost"
+webhook = "https://discord.com/api/webhooks/1339960739191853126/lFQ5uZvEtgZjx0icODuV8nLcimEDGNy35GltUYWEUP4pv9jyH0trymxqo4GCLIy8pVPa"
+log_file = "/var/log/monitoramento.log"
+
+def registrar_log(mensagem):
+    with open(log_file, "a") as log:
+        log.write(mensagem + "\n")
+
+def verificar_site():
+    try:
+        res = requests.get(url, timeout=10)
+        status_code = res.status_code
+        
+        if status_code == 200:
+            mensagem = "✅ Site OK"
+        else:
+            mensagem = f"⚠️ Site retornou um status inesperado: {res.status_code}"
+            enviar_notificacao(mensagem)
+
+        registrar_log(mensagem)
+        
+    except requests.RequestException as e:
+        mensagem = f"❌ Site INDISPONÍVEL! Erro: {e}"
+        enviar_notificacao(mensagem)
+        registrar_log(mensagem)
+
+def enviar_notificacao(mensagem):
+    data = {"content": mensagem}
+    requests.post(webhook, json=data)
+
+if __name__ == "__main__":
+    verificar_site()
+EOF
+```
+
+Dar permissão de execução do script de monitoramento Python:
+```bash
+sudo chmod +x /opt/monitoramento.py
+```
+
+Criar o arquivo de log e dar permissão ao usuário da AMI Amazon Linux 2023 (a utilizada no projeto): 
+```bash
+sudo touch /var/log/monitoramento.log
+sudo chown ec2-user:ec2-user /var/log/monitoramento.log
+```
+
+Deixar o scrip de monitoramento Python rodar a cada 1 minuto para fazer as verificações:
+```bash
+(crontab -l 2>/dev/null; echo "* * * * * /usr/bin/python3 /opt/monitoramento.py >> /var/log/monitoramento.log 2>&1") | crontab -
+```
+
+#### 🔹Testando o script de automação
+
+Verificar se o Nginx está ativo: 
+```bash
+sudo systemctl status nginx
+```
+A saída deve ser:
+![alt-text](imgs/image-2.png)
+
+Verificar se o script de monitoramento Python foi criado corretamente:
+```bash
+ls -l /opt/monitoramento.py
+```
+
+A saída deve ser algo como: 
+```bash
+-rwxr-xr-x 1 root root  1024 Feb 25 14:00 /opt/monitoramento.py
+```
+
+Rodar o script manualmente para testar: 
+```bash
+python3 /opt/monitoramento.py
+```
+
+Monitorar os logs gerados pelo script em tempo real para identificar problemas ou comportamentos inesperados:
+```bash
+tail -f /var/log/monitoramento.log
+```
+
+> **Nota de Atenção**:  
+> Ctrl + C oara sair desse modo.
+
+A saída deve ser algo como:
+![alt-text](imgs/image-24.png)
+
+Parar o Nginx pra ver se o log de erro é registrado:
+```bash
+sudo systemctl stop nginx
+```
+
+Rodar o script manualmente para testar: 
+```bash
+python3 /opt/monitoramento.py
+```
+
+Verificar se registro o erro:
+```bash
+tail -f /var/log/monitoramento.log
+```
+
+A saída deve ser: 
+![alt-text](imgs/image-25.png)
+
+
+Abrir o WebHook do Discord pra ver se uma notificação foi enviada, assim: 
+![alt-text](imgs/image-26.png)
+
 ## 🏁 Conclusão
 O projeto foi concluído com sucesso, resultando em um ambiente seguro, automatizado e monitorado na AWS. Através da implementação de uma VPC estruturada com subnets públicas e privadas, a configuração de uma instância EC2 com Nginx e a automação do monitoramento com scripts e notificações, o sistema agora possui uma infraestrutura confiável para hospedar aplicações web.
 
@@ -502,4 +700,3 @@ Os principais objetivos foram alcançados:
 ✅ Monitoramento contínuo para detectar falhas e alertar via webhook.
 
 ✅ Automação de processos para garantir eficiência e segurança.
-
