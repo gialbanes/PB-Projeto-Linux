@@ -504,10 +504,13 @@ Para isso, é necessário colocar o user data no momento de criação da instân
 
 #### 🔹Entendendo o script de automação 
 > **Nota de Atenção**:  
+> Certifique-se de estar conectado à EC2 via SSH para executar este desafio. 
+
+> **Nota de Atenção**:  
 > O script deve iniciar com #!/bin/bash.
 
 > **Nota de Atenção**:  
-> Todos os códigos contidos no scrip foram os executados manualmente anteriormente, agora só estou automatizando o processo.
+> Todos os códigos contidos no script foram os executados manualmente anteriormente, agora só estou automatizando o processo.
 
 Atualização do sistema e instalação do Nginx:
 ```bash
