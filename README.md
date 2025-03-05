@@ -347,8 +347,8 @@ import requests
 #### 🔹 Definir variáveis principais
 Adicione as seguintes linhas no seu script para armazenar a URL do site, a URL do webhook e o caminho do arquivo de logs:
 ```python
-url = "https://seusite.com"
-webhook = "https://discord.com/api/webhooks/SEU_WEBHOOK"
+url = "https://localhost"
+webhook = "UrlDoSeuWebhook"
 log_file = "/var/log/monitoramento.log"
 ```
 
@@ -356,8 +356,9 @@ log_file = "/var/log/monitoramento.log"
 Essa função permitirá armazenar todas as verificações no arquivo de log. Ela recebe uma mensagem como parâmetro e a adiciona ao arquivo de log. O modo `"a"` (append) garante que as novas mensagens sejam adicionadas ao final do arquivo, sem sobrescrever os logs anteriores
 ```python
 def registrar_log(mensagem):
-    with open(LOG_FILE, "a") as log:
-        log.write(mensagem + "\n")
+    # Abre o arquivo de log no modo "a" (append), o que garante que as novas mensagens sejam adicionadas ao final do arquivo, sem sobrescrever os logs anteriores
+    with open(log_file, "a") as log:
+        log.write(mensagem + "\n")  # Escreve a mensagem no arquivo 
 ```
 
 #### 🔹 Criar função para verificar a disponibilidade do site 
@@ -366,25 +367,33 @@ Esta função tenta acessar o site a cada 10 segundos e verifica se ele responde
 ```python
 def verificar_site():
     try:
-        res = requests.get(URL_SITE, timeout=10)
-        if res.status_code == 200:
-            mensagem = f"✅ Site OK!"
+        # Faz uma requisição GET para a URL definida com um timeout de 10 segundos
+        res = requests.get(url, timeout=10)
+        status_code = res.status_code # Obtém o código de status da resposta
+        
+        # Se o código do site for 200, ele está disponível
+        if status_code == 200:
+            mensagem = "✅ Site OK - Código de Status: {status_code}"
         else:
+            # Se o código for diferente de 200, ele está indisponível
             mensagem = f"⚠️ Site retornou um status inesperado: {res.status_code}"
-            enviar_notificacao(mensagem)
-        registrar_log(mensagem)
-    except requests.RequestException as erro:
-        mensagem = f"❌ Site INDISPONÍVEL! Erro: {erro}"
-        registrar_log(mensagem)
-        enviar_notificacao(mensagem)
+            enviar_notificacao(mensagem) # Envia uma notificação para o Discord
+        registrar_log(mensagem) # Registra a mensagem no log
+        
+    # Caso ocorra um erro de conexão, trata a exceção e registra a falha
+    except requests.RequestException as e:
+        mensagem = f"❌ Erro ao acessar o site: {e}"
+        enviar_notificacao(mensagem)  # Envia uma notificação para o Discord
+        registrar_log(mensagem) # Registra a mensagem no log
 ```
 
 #### 🔹 Criar função para enviar notificações ao Discord
 Esta função monta um JSON com a mensagem de erro e usa a URL do webhook do Discord para enviar a notificação. Dessa forma, sempre que o site ficar fora do ar, um alerta será enviado.
 ```python
 def enviar_notificacao(mensagem):
-    dados = {"content": mensagem}
-    requests.post(WEBHOOK_URL, json=dados)
+    # Monta o payload com a mensagem de erro, pois o webhook do Discord espera um objeto JSON
+    data = {"content": mensagem}
+    requests.post(webhook, json=data) # Envia a mensagem para o webhook do Discord
 ```
 
 #### 🔹 Tornar o script executável
@@ -669,9 +678,10 @@ tail -f /var/log/monitoramento.log
 ```
 
 > **Nota de Atenção**:  
-> Ctrl + C oara sair desse modo.
+> Ctrl + C para sair desse modo.
 
 A saída deve ser algo como:
+
 ![alt-text](imgs/image-24.png)
 
 Parar o Nginx pra ver se o log de erro é registrado:
